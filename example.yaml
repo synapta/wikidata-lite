@@ -1,0 +1,14 @@
+---
+label:
+  - add it
+
+description:
+  - add it optional
+
+predicate:
+  - add P31
+
+predicate-object:
+  - not P31 Q5 #human
+  - not P31 Q4167410 #disambiguation
+  - not P31 Q13442814 #scientific paper
