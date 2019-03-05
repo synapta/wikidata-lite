@@ -15,13 +15,19 @@ So you can generate only the portion of Wikidata graph you need, reducing the co
 TODO
 
 ## Usage
-TODO
+```
+./wd-lite.sh recipe inputfile outputfile
+```
+Where:
+- recipe is a YAML file like in examples
+- inputfile is the path of your Wikidata dump (nt.gz)
+- outputfile is the path of the nt RDF result
 
 ### Configuration file
 Wikidata-lite use a semantic YAML file as configuration. For each category described below you can choose an `add` or `not` rule, for
 a specific characteristic, using eventually `optional` (among `add`). You can add as many rules as you want for each category.
 
-- label: (add|not) [language] (optional)
-- description: (add|not) [language] (optional)
-- predicate: (add|not) [PXX] (optional)
-- predicate-object: (add|not) [PXX] [QXX] (optional)
+- label: add language [optional]
+- description: add language [optional]
+- predicate: (add|rm) PXX [optional]
+- predicate-object: (add|rm) PXX QXX [optional]

@@ -1,21 +1,76 @@
 #!/bin/bash
 
-# scarica https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.nt.gz
-# trova label it
-# trova description it
-# trova P31
-# filtra Q giuste
+#
+# PARAMS
+#
+if [[ $# -lt 3 ]] ; then
+    echo 'Usage: ./wd-lite.sh recipe input output'
+    exit 1
+fi
 
-#yq r example.yaml predicate-object
+recipe="$1"
+inputfile="$2"
+outputfile="$3"
 
-inputfile="$1"
 
+#
+# CONFIG
+#
+echo "Reading configuration"
+
+greplabelstring="/entity/Q[0-9]+> <http://schema.org/name>.*@"
+grepdescriptionstring="/entity/Q[0-9]+> <http://schema.org/description>.*@"
+grepaddprop="<http://www.wikidata.org/prop/direct/"
+declare -a GREP_ARGS
+
+# label
+GREP_ARGS[${#GREP_ARGS[@]}]=$(yq r $recipe label | (while read p; do
+    lang=$(echo $p | awk -F  " " '{print $3}')
+    optional=$(echo $p | awk -F  " " '{print $4}')
+done && echo "$greplabelstring$lang" ))
+
+# description
+GREP_ARGS[${#GREP_ARGS[@]}]=$(yq r $recipe description | (while read p; do
+    lang=$(echo $p | awk -F  " " '{print $3}')
+    optional=$(echo $p | awk -F  " " '{print $4}')
+done && echo "$grepdescriptionstring$lang" ))
+
+# predicate
+GREP_ARGS[${#GREP_ARGS[@]}]=$(yq r $recipe predicate | (while read p; do
+    operation=$(echo $p | awk -F  " " '{print $2}')
+    prop=$(echo $p | awk -F  " " '{print $3}')
+    optional=$(echo $p | awk -F  " " '{print $4}')
+done && \
+if [ "$operation" == "add" ]; then
+    echo "${grepaddprop}${prop}>"
+fi ))
+
+# predicate-object
+GREP_ARGS[${#GREP_ARGS[@]}]=$(yq r $recipe predicate-object | (while read p; do
+    operation=$(echo $p | awk -F  " " '{print $2}')
+    prop=$(echo $p | awk -F  " " '{print $3}')
+    obj=$(echo $p | awk -F  " " '{print $4}')
+    optional=$(echo $p | awk -F  " " '{print $5}')
+done && \
+if [ "$operation" == "add" ]; then
+    echo "${grepaddprop}${prop}>"
+fi ))
+
+# TODO remove empty instructions
+
+GREP_ARGS_FULL="grep -E "$(printf -- "-e \"%s\" " "${GREP_ARGS[@]}" | sort -u) #XXX uniq seems working in part
+echo "$GREP_ARGS_FULL"
+
+#
+# FILTER
+#
 echo "Finding data"
-time pigz -dc $inputfile | grep -E -e "/entity/Q[0-9]+> <http://schema.org/name>.*@it" \
-                                 -e "/entity/Q[0-9]+> <http://schema.org/description>.*@it" \
-                                 -e "<http://www.wikidata.org/prop/direct/P31>" \
-                       | sort -u > utemp.nt
+time pigz -dc $inputfile | eval "$GREP_ARGS_FULL" | sort -u > utemp.nt
 
+
+#
+# CLEAN
+#
 echo "Cleaning"
 findq='^<http:\/\/www.wikidata.org\/entity\/(Q[0-9]+)'
 findname=' <http://schema.org/name> '
@@ -24,7 +79,6 @@ currentq=''
 currentdata=''
 haslabel=false
 hasP31=false
-
 
 while read p; do
     #find current Q
@@ -39,7 +93,7 @@ while read p; do
 
             #print previous if necessary
             if [ $haslabel == true ] && [ $hasP31 == true ]; then
-                echo -e $currentdata >> output.nt
+                echo -e $currentdata >> $outputfile
             fi
 
             #clean vars
@@ -61,8 +115,3 @@ while read p; do
 done < utemp.nt
 
 rm utemp.nt
-
-
-#<http://www.wikidata.org/entity/Q12746> <http://schema.org/name> "Canton San Gallo"@it .
-#<http://www.wikidata.org/entity/Q12746> <http://schema.org/description> "cantone svizzero"@it .
-#<http://www.wikidata.org/entity/Q12756> <http://www.wikidata.org/prop/direct/P31> <http://www.wikidata.org/entity/Q5> .
