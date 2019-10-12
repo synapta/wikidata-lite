@@ -65,7 +65,7 @@ echo "$GREP_ARGS_FULL"
 # FILTER
 #
 echo "Finding data"
-time pigz -dc $inputfile | eval "$GREP_ARGS_FULL" | sort -u > utemp.nt
+time pigz -dc $inputfile | eval "$GREP_ARGS_FULL" | sort -S1G --parallel=8 -u > /tmp/utemp.nt
 
 
 #
@@ -112,6 +112,6 @@ while read p; do
     		#save data
     		currentdata="$currentdata$p\n"
     fi
-done < utemp.nt
+done < /tmp/utemp.nt
 
-rm utemp.nt
+rm /tmp/utemp.nt
