@@ -1,4 +1,4 @@
-# scarica https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.nt.gz
+# scarica https://dumps.wikimedia.org/wikidatawiki/entities/latest-truthy.nt.gz
 # trova label it
 # trova description it
 # trova P31
