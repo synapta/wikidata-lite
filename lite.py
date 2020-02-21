@@ -1,5 +1,6 @@
-import bz2
-import json
+import yaml
+import gzip
+import orjson as json
 
 '''
 {
@@ -14,12 +15,17 @@ import json
 }
 '''
 
-counter = 0;
-found = 0;
+with open('recipe_examples/instances_it.yaml', 'rt') as fp_yaml:
+    recipe = yaml.load(fp_yaml, Loader=yaml.BaseLoader)
+    print(recipe)
+
+counter = 0
+found = 0
 print("Wikidata entity found: %s/%s" % (found, counter))
 
-with bz2.open('wikidata.json.bz2', 'rt') as fp_json:
+with gzip.open('100k.json.gz', 'rt') as fp_json:
     for line in fp_json:
+
         if line[0] == '[' or line[0] == ']':
             continue
 
@@ -35,17 +41,20 @@ with bz2.open('wikidata.json.bz2', 'rt') as fp_json:
 
         entity = json.loads(line)
 
-        if 'claims' not in entity:
-            continue
+        stop = False
 
-        if 'labels' not in entity:
-            continue
+        for r_label in recipe['label']:
+            label = r_label.split()
+            language = label[1]
 
-        if 'en' not in entity['labels']:
-            continue
+            if language in entity['labels']:
+                print(entity['labels'][language]['value'])
+            else:
+                if len(label) == 2:
+                    stop = True
+                    break
 
-        # subclass of
-        if 'P279' not in entity['claims']:
+        if stop:
             continue
 
         found += 1
