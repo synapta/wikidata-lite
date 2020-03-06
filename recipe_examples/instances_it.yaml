@@ -1,15 +1,21 @@
 ---
-label:
+labels:
   - add it
   - add fr optional
 
-description:
+descriptions:
   - add it optional
 
-predicate:
+aliases:
+  - add it
+
+sitelinks:
+  - add itwiki
+
+claims:
   - add P31
 
-predicate-object:
+objects:
   - rm P31 Q5 #human
   - rm P31 Q4167410 #disambiguation
   - rm P31 Q13442814 #scientific paper

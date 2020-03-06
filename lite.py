@@ -23,6 +23,63 @@ counter = 0
 found = 0
 print("Wikidata entity found: %s/%s" % (found, counter))
 
+
+def resolve_snak(snak):
+    datatype = snak['mainsnak']['datatype']
+    value = snak['mainsnak']['datavalue']['value']
+
+    if datatype == 'wikibase-item':
+        result = value['id']
+    elif datatype == 'external-id':
+        result = value
+    elif datatype == 'commonsMedia':
+        result = value
+    elif datatype == 'string':
+        result = value
+    elif datatype == 'url':
+        result = value
+    elif datatype == 'quantity':
+        result = value['amount'] + ' ' + value['unit']
+    elif datatype == 'time':
+        result = value['time'] + ' ' + str(value['precision'])
+    elif datatype == 'globe-coordinate':
+        result = str(value['latitude']) + ' ' + str(value['longitude'])
+    else:
+        raise NotImplementedError()
+
+    return result
+
+
+def simple_recipe(recipe, entity, field):
+    if field == 'sitelinks':
+        value = 'title'
+    else:
+        value = 'value'
+
+    if field not in recipe:
+        return
+
+    for r_label in recipe[field]:
+        label = r_label.split()
+        rule = label[1]
+
+        if rule in entity[field]:
+            if field == 'aliases':
+                for alias in entity[field][rule]:
+                    print(entity['id'], field, alias[value])
+            elif field == 'claims':
+                for claim in entity[field][rule]:
+                    try:
+                        print(entity['id'], rule, resolve_snak(claim))
+                    except NotImplementedError:
+                        pass
+            else:
+                print(entity['id'], field, entity[field][rule][value])
+        else:
+            if len(label) == 2:
+                raise ValueError()
+
+
 with gzip.open('100k.json.gz', 'rt') as fp_json:
     for line in fp_json:
 
@@ -41,20 +98,13 @@ with gzip.open('100k.json.gz', 'rt') as fp_json:
 
         entity = json.loads(line)
 
-        stop = False
-
-        for r_label in recipe['label']:
-            label = r_label.split()
-            language = label[1]
-
-            if language in entity['labels']:
-                print(entity['labels'][language]['value'])
-            else:
-                if len(label) == 2:
-                    stop = True
-                    break
-
-        if stop:
+        try:
+            #simple_recipe(recipe, entity, 'labels')
+            #simple_recipe(recipe, entity, 'descriptions')
+            #simple_recipe(recipe, entity, 'aliases')
+            #simple_recipe(recipe, entity, 'sitelinks')
+            simple_recipe(recipe, entity, 'claims')
+        except ValueError:
             continue
 
         found += 1
