@@ -99,10 +99,10 @@ with gzip.open('100k.json.gz', 'rt') as fp_json:
         entity = json.loads(line)
 
         try:
-            #simple_recipe(recipe, entity, 'labels')
-            #simple_recipe(recipe, entity, 'descriptions')
-            #simple_recipe(recipe, entity, 'aliases')
-            #simple_recipe(recipe, entity, 'sitelinks')
+            simple_recipe(recipe, entity, 'labels')
+            simple_recipe(recipe, entity, 'descriptions')
+            simple_recipe(recipe, entity, 'aliases')
+            simple_recipe(recipe, entity, 'sitelinks')
             simple_recipe(recipe, entity, 'claims')
         except ValueError:
             continue
