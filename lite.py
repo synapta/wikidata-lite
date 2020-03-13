@@ -61,7 +61,7 @@ def simple_recipe(recipe, entity, field):
 
     for r_label in recipe[field]:
         label = r_label.split()
-        rule = label[1]
+        rule = label[0]
 
         if rule in entity[field]:
             if field == 'aliases':
@@ -76,11 +76,11 @@ def simple_recipe(recipe, entity, field):
             else:
                 print(entity['id'], field, entity[field][rule][value])
         else:
-            if len(label) == 2:
+            if len(label) == 1:
                 raise ValueError()
 
 
-with gzip.open('100k.json.gz', 'rt') as fp_json:
+with gzip.open('1k.json.gz', 'rt') as fp_json:
     for line in fp_json:
 
         if line[0] == '[' or line[0] == ']':
