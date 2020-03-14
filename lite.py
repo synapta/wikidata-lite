@@ -1,5 +1,5 @@
 import argparse
-import gzip
+import mgzip
 import orjson
 import yaml
 
@@ -151,7 +151,7 @@ if __name__ == "__main__":
 
     # TODO validate recipe
 
-    with gzip.open(args.input, 'rt') as fp_in:
+    with mgzip.open(args.input, 'rt') as fp_in:
         triples = Parallel(n_jobs=args.n_jobs, verbose=args.verbose)(
             delayed(process_line)(raw_line) for raw_line in fp_in)
 

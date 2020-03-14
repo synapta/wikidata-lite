@@ -1,3 +1,4 @@
 joblib
+mgzip
 orjson
 pyyaml
