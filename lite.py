@@ -66,7 +66,7 @@ def run_recipe(entity, result, field):
                     if resolve_snak(claim) == label[1]:
                         filtered = True
                 if filtered:
-                    raise ValueError()
+                    raise UserWarning()
         elif rule in entity[field]:
             if field == 'aliases':
                 for alias in entity[field][rule]:
@@ -81,7 +81,7 @@ def run_recipe(entity, result, field):
                 result.append((entity['id'], field, resolve_rule(field, rule, entity[field][rule][value])))
         else:
             if len(label) == 1:
-                raise ValueError()
+                raise UserWarning()
 
 
 def process_line(line):
@@ -104,7 +104,7 @@ def process_line(line):
         run_recipe(entity, result, 'sitelinks')
         run_recipe(entity, result, 'claims')
         run_recipe(entity, result, 'filters')
-    except ValueError:
+    except UserWarning:
         return
 
     for triple in result:
