@@ -1,16 +1,22 @@
-import yaml
+import argparse
 import gzip
-import orjson as json
+import orjson
+import yaml
 
 from joblib import Parallel, delayed
 
+# TODO create lookup file
 sitelinks = {
     'itwiki': 'https://it.wikipedia.org/wiki/',
     'enwiki': 'https://en.wikipedia.org/wiki/'
 }
 
-with open('recipe_examples/instances_it.yaml', 'rt') as fp_yaml:
-    recipe = yaml.load(fp_yaml, Loader=yaml.BaseLoader)
+
+def resolve_rule(field, rule, value):
+    if field == "sitelinks":
+        return '<' + sitelinks[rule] + value.replace(' ', '_') + '>'
+    else:
+        return '"' + value + '"@' + rule
 
 
 def resolve_snak(snak):
@@ -37,13 +43,6 @@ def resolve_snak(snak):
         raise NotImplementedError()
 
     return result
-
-
-def resolve_rule(field, rule, value):
-    if field == "sitelinks":
-        return '<' + sitelinks[rule] + value.replace(' ', '_') + '>'
-    else:
-        return '"' + value + '"@' + rule
 
 
 def run_recipe(entity, result, field):
@@ -93,7 +92,7 @@ def process_line(line):
     if line[-1] == ',':
         line = line[:-1]
 
-    entity = json.loads(line)
+    entity = orjson.loads(line)
 
     result = []
 
@@ -134,15 +133,31 @@ def process_line(line):
         return line
 
 
-with gzip.open('100k.json.gz', 'rt') as fp_json:
-    triples = Parallel(n_jobs=2, verbose=50)(delayed(process_line)(raw_line) for raw_line in fp_json)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Wikidata lite')
+    parser.add_argument('recipe', help='The YAML recipe file')
+    parser.add_argument('input', help='The gzipped Wikidata JSON dump')
+    parser.add_argument('output', help='The TTL output file')
+    parser.add_argument('--n_jobs', type=int, default=2, help='The number of workers')
+    parser.add_argument('--verbose', type=int, default=50, help='The verbosity level')
 
-    with open('result.ttl', 'w') as fp_out:
-        fp_out.write("""@prefix wd: <http://www.wikidata.org/entity/> .
-@prefix wdt: <http://www.wikidata.org/prop/direct/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-""")
-        for triple in triples:
-            if triple is not None:
-                fp_out.write(triple + '\n')
+    args = parser.parse_args()
+
+    with open(args.recipe, 'rt') as fp_yaml:
+        recipe = yaml.load(fp_yaml, Loader=yaml.BaseLoader)
+
+    # TODO validate recipe
+
+    with gzip.open(args.input, 'rt') as fp_in:
+        triples = Parallel(n_jobs=args.n_jobs, verbose=args.verbose)(
+            delayed(process_line)(raw_line) for raw_line in fp_in)
+
+        with open(args.output, 'w') as fp_out:
+            fp_out.write("@prefix wd: <http://www.wikidata.org/entity/> .\n")
+            fp_out.write("@prefix wdt: <http://www.wikidata.org/prop/direct/> .\n")
+            fp_out.write("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n")
+            fp_out.write("@prefix skos: <http://www.w3.org/2004/02/skos/core#> .\n")
+
+            for triple in triples:
+                if triple is not None:
+                    fp_out.write(triple + '\n')
