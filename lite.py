@@ -151,16 +151,13 @@ if __name__ == "__main__":
 
     # TODO validate recipe
 
-    with mgzip.open(args.input, 'rt') as fp_in:
-        triples = Parallel(n_jobs=args.n_jobs, verbose=args.verbose)(
-            delayed(process_line)(raw_line) for raw_line in fp_in)
+    with mgzip.open(args.input, 'rt') as fp_in, open(args.output, 'w') as fp_out:
+        fp_out.write("@prefix wd: <http://www.wikidata.org/entity/> .\n")
+        fp_out.write("@prefix wdt: <http://www.wikidata.org/prop/direct/> .\n")
+        fp_out.write("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n")
+        fp_out.write("@prefix skos: <http://www.w3.org/2004/02/skos/core#> .\n")
 
-        with open(args.output, 'w') as fp_out:
-            fp_out.write("@prefix wd: <http://www.wikidata.org/entity/> .\n")
-            fp_out.write("@prefix wdt: <http://www.wikidata.org/prop/direct/> .\n")
-            fp_out.write("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n")
-            fp_out.write("@prefix skos: <http://www.w3.org/2004/02/skos/core#> .\n")
-
-            for triple in triples:
-                if triple is not None:
-                    fp_out.write(triple + '\n')
+        for triple in Parallel(n_jobs=args.n_jobs, verbose=args.verbose)(
+                delayed(process_line)(raw_line) for raw_line in fp_in):
+            if triple is not None:
+                fp_out.write(triple + '\n')
