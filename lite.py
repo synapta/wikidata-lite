@@ -2,6 +2,8 @@ import yaml
 import gzip
 import orjson as json
 
+from joblib import Parallel, delayed
+
 sitelinks = {
     'itwiki': 'https://it.wikipedia.org/wiki/',
     'enwiki': 'https://en.wikipedia.org/wiki/'
@@ -9,11 +11,6 @@ sitelinks = {
 
 with open('recipe_examples/instances_it.yaml', 'rt') as fp_yaml:
     recipe = yaml.load(fp_yaml, Loader=yaml.BaseLoader)
-    print(recipe)
-
-counter = 0
-found = 0
-print("Wikidata entity found: %s/%s" % (found, counter))
 
 
 def resolve_snak(snak):
@@ -49,7 +46,7 @@ def resolve_rule(field, rule, value):
         return '"' + value + '"@' + rule
 
 
-def run_recipe(recipe, entity, result, field):
+def run_recipe(entity, result, field):
     if field == 'sitelinks':
         value = 'title'
     else:
@@ -87,68 +84,65 @@ def run_recipe(recipe, entity, result, field):
                 raise ValueError()
 
 
-with gzip.open('1k.json.gz', 'rt') as fp_json:
+def process_line(line):
+    if line[0] == '[' or line[0] == ']':
+        return
 
-    # @prefix wd: <http://www.wikidata.org/entity/> .
-    # @prefix wdt: <http://www.wikidata.org/prop/direct/> .
-    # @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-    # @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+    line = line.strip()
 
-    for line in fp_json:
+    if line[-1] == ',':
+        line = line[:-1]
 
-        if line[0] == '[' or line[0] == ']':
-            continue
+    entity = json.loads(line)
 
-        line = line.strip()
+    result = []
 
-        if line[-1] == ',':
-            line = line[:-1]
+    try:
+        run_recipe(entity, result, 'labels')
+        run_recipe(entity, result, 'descriptions')
+        run_recipe(entity, result, 'aliases')
+        run_recipe(entity, result, 'sitelinks')
+        run_recipe(entity, result, 'claims')
+        run_recipe(entity, result, 'filters')
+    except ValueError:
+        return
 
-        counter += 1
+    for triple in result:
+        subject = 'wd:' + triple[0]
 
-        if counter % 10000 == 0:
-            print("Wikidata entity found: %s/%s" % (found, counter))
+        if triple[1] == "labels":
+            predicate = "schema:name"
+        elif triple[1] == "descriptions":
+            predicate = "schema:description"
+        elif triple[1] == "aliases":
+            predicate = "skos:altLabel"
+        elif triple[1] == "sitelinks":
+            predicate = "schema:about"
+        else:
+            predicate = "wdt:" + triple[1]
 
-        entity = json.loads(line)
+        if triple[2][0] == 'Q':
+            obj = 'wd:' + triple[2]
+        else:
+            obj = triple[2]
 
-        result = []
+        if triple[1] == 'sitelinks':
+            line = obj + ' ' + predicate + ' ' + subject + ' .'
+        else:
+            line = subject + ' ' + predicate + ' ' + obj + ' .'
 
-        try:
-            run_recipe(recipe, entity, result, 'labels')
-            run_recipe(recipe, entity, result, 'descriptions')
-            run_recipe(recipe, entity, result, 'aliases')
-            run_recipe(recipe, entity, result, 'sitelinks')
-            run_recipe(recipe, entity, result, 'claims')
-            run_recipe(recipe, entity, result, 'filters')
-        except ValueError:
-            continue
+        return line
 
-        for triple in result:
-            subject = 'wd:' + triple[0]
 
-            if triple[1] == "labels":
-                predicate = "schema:name"
-            elif triple[1] == "descriptions":
-                predicate = "schema:description"
-            elif triple[1] == "aliases":
-                predicate = "skos:altLabel"
-            elif triple[1] == "sitelinks":
-                predicate = "schema:about"
-            else:
-                predicate = "wdt:" + triple[1]
+with gzip.open('100k.json.gz', 'rt') as fp_json:
+    triples = Parallel(n_jobs=2, verbose=50)(delayed(process_line)(raw_line) for raw_line in fp_json)
 
-            if triple[2][0] == 'Q':
-                obj = 'wd:' + triple[2]
-            else:
-                obj = triple[2]
-
-            if triple[1] == 'sitelinks':
-                line = obj + ' ' + predicate + ' ' + subject + ' .'
-            else:
-                line = subject + ' ' + predicate + ' ' + obj + ' .'
-
-            print(line)
-
-        found += 1
-
-print("Wikidata entity found: %s/%s" % (found, counter))
+    with open('result.ttl', 'w') as fp_out:
+        fp_out.write("""@prefix wd: <http://www.wikidata.org/entity/> .
+@prefix wdt: <http://www.wikidata.org/prop/direct/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+""")
+        for triple in triples:
+            if triple is not None:
+                fp_out.write(triple + '\n')
