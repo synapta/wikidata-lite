@@ -21,7 +21,10 @@ def resolve_rule(field, rule, value):
 
 def resolve_snak(snak):
     datatype = snak['mainsnak']['datatype']
-    value = snak['mainsnak']['datavalue']['value']
+    try:
+        value = snak['mainsnak']['datavalue']['value']
+    except KeyError:
+        raise NotImplementedError()
 
     if datatype == 'wikibase-item':
         result = value['id']
@@ -51,7 +54,7 @@ def run_recipe(entity, result, field):
     else:
         value = 'value'
 
-    if field not in recipe:
+    if field not in recipe or field not in entity:
         return
 
     for r_label in recipe[field]:
