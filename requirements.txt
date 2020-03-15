@@ -1,4 +1,4 @@
 joblib
-mgzip
 orjson
 pyyaml
+xopen

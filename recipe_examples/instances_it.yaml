@@ -16,6 +16,6 @@ claims:
   - P31
 
 filters:
-  - P31 Q5 #human
-  - P31 Q4167410 #disambiguation
-  - P31 Q13442814 #scientific paper
+  - P31 Q5  # human
+  - P31 Q4167410  # disambiguation
+  - P31 Q13442814  # scientific paper

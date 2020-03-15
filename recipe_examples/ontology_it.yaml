@@ -1,11 +1,11 @@
 ---
-label:
-  - add it
+labels:
+  - it
 
-description:
-  - add it optional
+descriptions:
+  - it optional
 
-predicate:
-  - add P279
+claims:
+  - P279
 
-predicate-object:
+filters:
