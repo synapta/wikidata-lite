@@ -1,7 +1,6 @@
 import argparse
 import csv
 import sys
-from urllib.parse import quote
 
 import orjson
 import yaml
@@ -83,7 +82,7 @@ def resolve_snak(snak):
     elif datatype == 'external-id':
         result = '"' + value + '"'
     elif datatype == 'commonsMedia':
-        result = '<http://commons.wikimedia.org/wiki/Special:FilePath/' + quote(value) + '>'
+        result = '<http://commons.wikimedia.org/wiki/Special:FilePath/' + value + '>'
     elif datatype == 'string':
         result = '"' + value + '"'
     elif datatype == 'url':
@@ -195,8 +194,8 @@ def process_line(line):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Wikidata lite')
     parser.add_argument('recipe', help='The YAML recipe file')
-    parser.add_argument('input', help='The Wikidata JSON dump')
-    parser.add_argument('output', help='The TTL output file')
+    parser.add_argument('wikidata', help='The Wikidata JSON dump')
+    parser.add_argument('rdf', help='The NT output file')
     parser.add_argument('--n_jobs', type=int, default=2, help='The number of workers')
     parser.add_argument('--verbose', type=int, default=50, help='The verbosity level')
 
