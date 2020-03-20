@@ -1,3 +1,5 @@
+import csv
+
 import argparse
 import orjson
 import yaml
@@ -5,11 +7,17 @@ import yaml
 from joblib import Parallel, delayed
 from xopen import xopen
 
-# TODO create lookup file
-sitelinks = {
-    'itwiki': 'https://it.wikipedia.org/wiki/',
-    'enwiki': 'https://en.wikipedia.org/wiki/'
-}
+sitelinks = {}
+
+
+def load_sitelinks(file_name):
+    global sitelinks
+
+    with open(file_name) as fp:
+        reader = csv.reader(fp, delimiter=',')
+        for row in reader:
+            if len(row) == 2:
+                sitelinks[row[0]] = row[1]
 
 
 def resolve_rule(field, rule, value):
@@ -149,6 +157,8 @@ if __name__ == "__main__":
     parser.add_argument('--verbose', type=int, default=50, help='The verbosity level')
 
     args = parser.parse_args()
+
+    load_sitelinks('sitelinks.csv')
 
     with open(args.recipe, 'rt') as fp_yaml:
         recipe = yaml.load(fp_yaml, Loader=yaml.BaseLoader)
