@@ -1,10 +1,10 @@
+import argparse
 import csv
 import sys
+from urllib.parse import quote
 
-import argparse
 import orjson
 import yaml
-
 from joblib import Parallel, delayed
 from xopen import xopen
 
@@ -83,15 +83,15 @@ def resolve_snak(snak):
     elif datatype == 'external-id':
         result = '"' + value + '"'
     elif datatype == 'commonsMedia':
-        result = value  # TODO
+        result = '<http://commons.wikimedia.org/wiki/Special:FilePath/' + quote(value) + '>'
     elif datatype == 'string':
         result = '"' + value + '"'
     elif datatype == 'url':
         result = '"' + value + '"'
     elif datatype == 'quantity':
-        result = value['amount'] + ' ' + value['unit']  # TODO
+        result = '"' + value['amount'] + '"^^xsd:decimal'
     elif datatype == 'time':
-        result = value['time'] + ' ' + str(value['precision'])  # TODO
+        result = '"' + value['time'] + '"^^xsd:dateTime'
     elif datatype == 'globe-coordinate':
         result = '"Point(' + str(value['longitude']) + ' ' + str(value['latitude']) + ')"^^geo:wktLiteral'
     else:
