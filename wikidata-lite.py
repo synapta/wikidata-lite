@@ -211,7 +211,7 @@ if __name__ == "__main__":
     except ValueError:
         sys.exit(1)
 
-    with xopen(args.input, 'rt') as fp_in, xopen(args.output, 'w') as fp_out:
+    with xopen(args.wikidata, 'rt') as fp_in, xopen(args.rdf, 'w') as fp_out:
         fp_out.write("@prefix wd: <http://www.wikidata.org/entity/> .\n")
         fp_out.write("@prefix wdt: <http://www.wikidata.org/prop/direct/> .\n")
         fp_out.write("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n")
