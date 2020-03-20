@@ -1,4 +1,5 @@
 import csv
+import sys
 
 import argparse
 import orjson
@@ -18,6 +19,49 @@ def load_sitelinks(file_name):
         for row in reader:
             if len(row) == 2:
                 sitelinks[row[0]] = row[1]
+
+
+def validate_recipe(recipe_dict):
+    sections = ['labels', 'descriptions', 'aliases', 'sitelinks', 'claims', 'filters']
+
+    for section in recipe_dict.keys():
+        if section not in sections:
+            print('Unknown section', section)
+            raise ValueError
+
+    if 'sitelinks' in recipe_dict:
+        validate_sitelinks(recipe_dict['sitelinks'])
+
+    for section_name in sections:
+        if section_name in recipe_dict:
+            validate_section(recipe_dict[section_name], section_name)
+
+
+def validate_sitelinks(section):
+    for rule in section:
+        fields = rule.split(' ')
+
+        if fields[0] not in sitelinks:
+            print('Please add sitelink', fields[0], 'to sitelinks.csv')
+            raise ValueError
+
+
+def validate_section(section, section_name):
+    for rule in section:
+        fields = rule.split(' ')
+
+        if len(fields) > 2:
+            print('Too many values in rule', rule)
+            raise ValueError
+        elif len(fields) == 2 and fields[1] != 'optional' and section_name != 'filters':
+            print('Value', fields[1], 'must be optional')
+            raise ValueError
+        elif section_name == 'filters' and len(fields) != 2:
+            print('Filter', rule, 'must have two values')
+            raise ValueError
+        elif len(fields) < 1 or fields == ['']:
+            print('Rule cannot be empty')
+            raise ValueError
 
 
 def resolve_rule(field, rule, value):
@@ -163,7 +207,10 @@ if __name__ == "__main__":
     with open(args.recipe, 'rt') as fp_yaml:
         recipe = yaml.load(fp_yaml, Loader=yaml.BaseLoader)
 
-    # TODO validate recipe
+    try:
+        validate_recipe(recipe)
+    except ValueError:
+        sys.exit(1)
 
     with xopen(args.input, 'rt') as fp_in, xopen(args.output, 'w') as fp_out:
         fp_out.write("@prefix wd: <http://www.wikidata.org/entity/> .\n")
