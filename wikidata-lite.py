@@ -67,7 +67,7 @@ def resolve_rule(field, rule, value):
     if field == "sitelinks":
         return '<' + sitelinks[rule] + value.replace(' ', '_') + '>'
     else:
-        return '"' + value.replace('"', r'\"') + '"@' + rule
+        return orjson.dumps(value).decode() + '@' + rule
 
 
 def resolve_snak(snak):
@@ -80,13 +80,13 @@ def resolve_snak(snak):
     if datatype == 'wikibase-item':
         result = value['id']
     elif datatype == 'external-id':
-        result = '"' + value.replace('"', r'\"') + '"'
+        result = orjson.dumps(value).decode()
     elif datatype == 'commonsMedia':
         result = '<http://commons.wikimedia.org/wiki/Special:FilePath/' + value + '>'
     elif datatype == 'string':
-        result = '"' + value.replace('"', r'\"') + '"'
+        result = orjson.dumps(value).decode()
     elif datatype == 'url':
-        result = '"' + value.replace('"', r'\"') + '"'
+        result = orjson.dumps(value).decode()
     elif datatype == 'quantity':
         result = '"' + value['amount'] + '"^^xsd:decimal'
     elif datatype == 'time':
