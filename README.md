@@ -1,7 +1,7 @@
-# wikidata-lite
+# Wikidata-lite
 We're collecting a lot of knowledge in Wikidata and this is awesome. Some of us also want to use it in some weird projects. Unfortunately [Wikidata RDF dumps](https://dumps.wikimedia.org/wikidatawiki/entities/) are really huge. Even the official SPARQL endpoint is under pressure by the incredible amount of data. At present time only simple queries or specific patterns see the light.
 
-We need more light. So why we are here with Wikidata...lite!
+We need more light. Because of this, we are here with Wikidata... lite!
 
 In most of our use cases we don't need the entire sum of knowledge contained in the full graph. Probably we just need the tip of the iceberg. The idea behind this repository is to create simple recipes, with less fat and more of what you like!
 So you can generate only the portion of the Wikidata RDF graph you need, reducing the cost of hardware and increasing the feasibility of your queries.
@@ -18,8 +18,8 @@ python wikidata-lite.py recipe wikidata rdf
 ```
 Where:
 - **recipe** is a valid YAML recipe (see paragraph "Recipes" for more details);
-- **wikidata** is the path of your Wikidata dump (json.gz);
-- **rdf** is the path for the RDF result (serialized as N-Triples).
+- **wikidata** is the path of your Wikidata dump;
+- **rdf** is the path for the RDF result (serialized as Turtle).
 
 ## Recipes
 Wikidata-lite uses a semantic YAML file as configuration. See recipe examples in [this directory](https://github.com/synapta/wikidata-lite/tree/master/recipe_examples) for inspiration. 

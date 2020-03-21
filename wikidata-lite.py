@@ -67,7 +67,7 @@ def resolve_rule(field, rule, value):
     if field == "sitelinks":
         return '<' + sitelinks[rule] + value.replace(' ', '_') + '>'
     else:
-        return '"' + value + '"@' + rule
+        return '"' + value.replace('"', '\"') + '"@' + rule
 
 
 def resolve_snak(snak):
@@ -80,13 +80,13 @@ def resolve_snak(snak):
     if datatype == 'wikibase-item':
         result = value['id']
     elif datatype == 'external-id':
-        result = '"' + value + '"'
+        result = '"' + value.replace('"', '\"') + '"'
     elif datatype == 'commonsMedia':
         result = '<http://commons.wikimedia.org/wiki/Special:FilePath/' + value + '>'
     elif datatype == 'string':
-        result = '"' + value + '"'
+        result = '"' + value.replace('"', '\"') + '"'
     elif datatype == 'url':
-        result = '"' + value + '"'
+        result = '"' + value.replace('"', '\"') + '"'
     elif datatype == 'quantity':
         result = '"' + value['amount'] + '"^^xsd:decimal'
     elif datatype == 'time':
@@ -192,10 +192,10 @@ def process_line(line):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Wikidata lite')
+    parser = argparse.ArgumentParser(description='Wikidata-lite')
     parser.add_argument('recipe', help='The YAML recipe file')
     parser.add_argument('wikidata', help='The Wikidata JSON dump')
-    parser.add_argument('rdf', help='The NT output file')
+    parser.add_argument('rdf', help='The TTL output file')
     parser.add_argument('--n_jobs', type=int, default=2, help='The number of workers')
     parser.add_argument('--verbose', type=int, default=50, help='The verbosity level')
 
@@ -214,8 +214,10 @@ if __name__ == "__main__":
     with xopen(args.wikidata, 'rt') as fp_in, xopen(args.rdf, 'w') as fp_out:
         fp_out.write("@prefix wd: <http://www.wikidata.org/entity/> .\n")
         fp_out.write("@prefix wdt: <http://www.wikidata.org/prop/direct/> .\n")
+        fp_out.write("@prefix schema: <http://schema.org/> .\n")
         fp_out.write("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n")
         fp_out.write("@prefix skos: <http://www.w3.org/2004/02/skos/core#> .\n")
+        fp_out.write("@prefix geo: <http://www.opengis.net/ont/geosparql#> .\n")
 
         for triples in Parallel(n_jobs=args.n_jobs, verbose=args.verbose)(
                 delayed(process_line)(raw_line) for raw_line in fp_in):
